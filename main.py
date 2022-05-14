@@ -17,7 +17,7 @@ from torchvision import datasets, transforms, models
     
 
 def main(args):
-    print('==> Device count: {torch.cuda.device_count()}')
+    print(f'==> Device count: {torch.cuda.device_count()}')
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     print('==> Preparing dataset..')
@@ -28,7 +28,7 @@ def main(args):
         './data',
         train=True,
         download=True,
-        transforms=transforms.Compose([
+        transform=transforms.Compose([
             transforms.RandomCrop(image_size, padding=4),
             transforms.RandomHorizontalFlip(),
             transforms.RandomRotation(15),
@@ -41,7 +41,7 @@ def main(args):
         './data',
         train=False,
         download=True,
-        transforms=transforms.Compose([
+        transform=transforms.Compose([
             transforms.ToTensor(),
             normalize,
         ])
