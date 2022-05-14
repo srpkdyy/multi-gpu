@@ -17,8 +17,9 @@ from torchvision import datasets, transforms, models
     
 
 def main(args):
-    print(f'==> Device count: {torch.cuda.device_count()}')
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    dcount = torch.cuda.device_count()
+    print(f'==> Device count: {dcount}')
 
     print('==> Preparing dataset..')
     image_size = 32
@@ -68,13 +69,13 @@ def main(args):
     model.fc = nn.Linear(model.fc.in_features, 100)
     model = model.to(device)
 
-    if torch.cuda.device_count() > 1:
+    if dcount > 1:
         print('Parallelizing model...')
         model = nn.DataParallel(model)
         torch.backends.cudnn.benchmark = True
 
     criterion = nn.CrossEntropyLoss().to(device)
-    optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=0.9)
+    optimizer = optim.SGD(model.parameters(), lr=1e-3*dcount, momentum=0.9)
 
     print('==> Training model...')
     for epoch in range(args.epochs):
