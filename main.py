@@ -64,16 +64,19 @@ def main(args):
     )
 
     print('==> Building model..')
-    model = models.convnext_large(pretrained=True).to(device)
+    model = models.resnet152(pretrained=True)
+    model.fc = nn.Linear(model.fc.in_features, 100)
+    model = model.to(device)
 
-    if device == 'cuda':
+    if torch.cuda.device_count() > 1:
+        print('Parallelizing model...')
         model = nn.DataParallel(model)
         torch.backends.cudnn.benchmark = True
 
     criterion = nn.CrossEntropyLoss().to(device)
     optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=0.9)
 
-    print('==> Training model')
+    print('==> Training model...')
     for epoch in range(args.epochs):
         train(model, train_loader, epoch, optimizer, criterion, device)
         validate(model, val_loader, criterion, device)
