@@ -17,7 +17,7 @@ from torchvision import datasets, transforms, models
     
 
 def main(args):
-    print('==> Device count: ' + torch.cuda.device_count())
+    print('==> Device count: {torch.cuda.device_count()}')
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     print('==> Preparing dataset..')
