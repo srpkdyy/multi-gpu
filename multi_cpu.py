@@ -5,6 +5,7 @@ parser.add_argument('-b', '--batch-size', default=4096, type=int, metavar='N')
 parser.add_argument('--lr', default=1e-2, type=float, metavar='N')
 parser.add_argument('-j', '--workers', default=4, type=int, metavar='N')
 parser.add_argument('-n', '--n-device', default=1, type=int, metavar='LR')
+parser.add_argument('-d', '--dir', default='./data', type=str, metavar='DIR')
 args = parser.parse_args()
 
 import os
@@ -23,51 +24,23 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torchvision import datasets, transforms, models
     
 
-def main(rank, world_size, args):
+def main(rank, world_size, train_ds, test_ds, args):
     dist.init_process_group('nccl', rank=rank, world_size=world_size)
 
-    print('==> Preparing dataset..')
-    image_size = 32
-    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    
-    train_ds = datasets.CIFAR100(
-        './data',
-        train=True,
-        download=True,
-        transform=transforms.Compose([
-            transforms.RandomCrop(image_size, padding=4),
-            transforms.RandomHorizontalFlip(),
-            transforms.RandomRotation(15),
-            transforms.ToTensor(),
-            normalize,
-        ])
-    )
 
-    val_ds = datasets.CIFAR100(
-        './data',
-        train=False,
-        download=True,
-        transform=transforms.Compose([
-            transforms.ToTensor(),
-            normalize,
-        ])
-    )
-    
     train_loader = torch.utils.data.DataLoader(
         train_ds, 
         batch_size=args.batch_size, 
-        shuffle=True, 
         num_workers=args.workers, 
-        pin_memory=True
-    )
+        pin_memory=True,
+        sampler=dist.DistributedSampler(train_ds, num_replicas=world_size, rank=rank, shuffle=True)
 
     val_loader = torch.utils.data.DataLoader(
         val_ds,
         batch_size=args.batch_size,
-        shuffle=False,
         num_workers=args.workers,
         pin_memory=True
-    )
+        sampler=dist.DistributedSampler(val_ds, num_replicas=world_size, rank=rank, shuffle=False))
 
     print('==> Building model..')
     model = models.resnet152(pretrained=True)
@@ -142,8 +115,33 @@ def disp_progress(mode, i, n, loss, correct, total):
 if __name__ == '__main__':
     start = time.time()
 
+    print('==> Preparing dataset..')
+    image_size = 32
+    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    
+    train_ds = datasets.CIFAR100(
+        args.dir,
+        train=True,
+        download=True,
+        transform=transforms.Compose([
+            transforms.RandomCrop(image_size, padding=4),
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomRotation(15),
+            transforms.ToTensor(),
+            normalize,
+        ]))
+
+    val_ds = datasets.CIFAR100(
+        args.dir
+        train=False,
+        download=True,
+        transform=transforms.Compose([
+            transforms.ToTensor(),
+            normalize,
+        ]))
+
     mp.spawn(main,
-        args=(args.n_device, args),
+        args=(args.n_device, train_ds, val_ds, args),
         nprocs=args.n_device,
         join=True)
 

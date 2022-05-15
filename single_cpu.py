@@ -4,7 +4,8 @@ parser.add_argument('-e', '--epochs', default=10, type=int, metavar='N')
 parser.add_argument('-b', '--batch-size', default=4096, type=int, metavar='N')
 parser.add_argument('--lr', default=1e-2, type=float, metavar='N')
 parser.add_argument('-j', '--workers', default=4, type=int, metavar='N')
-parser.add_argument('-n', '--n-device', default=1, type=int, metavar='LR')
+parser.add_argument('-n', '--n-device', default=1, type=int, metavar='N')
+parser.add_argument('-d', '--dir', default='./data', type=str, metavar='STR')
 args = parser.parse_args()
 
 import os
@@ -29,7 +30,7 @@ def main(args):
     args.batch_size *= dcount
     
     train_ds = datasets.CIFAR100(
-        './data',
+        args.dir,
         train=True,
         download=True,
         transform=transforms.Compose([
@@ -42,7 +43,7 @@ def main(args):
     )
 
     val_ds = datasets.CIFAR100(
-        './data',
+        args.dir,
         train=False,
         download=True,
         transform=transforms.Compose([
