@@ -20,27 +20,27 @@ from torch import nn, optim
 from torch.utils.data import TensorDataset, DataLoader
 import torch.distributed as dist
 import torch.multiprocessing as mp
+from torch.utils.data.distributed import DistributedSampler
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torchvision import datasets, transforms, models
     
 
 def main(rank, world_size, train_ds, test_ds, args):
-    dist.init_process_group('nccl', rank=rank, world_size=world_size)
-
+    torch.distributed.init_process_group('nccl', rank=rank, world_size=world_size)
 
     train_loader = torch.utils.data.DataLoader(
         train_ds, 
         batch_size=args.batch_size, 
         num_workers=args.workers, 
         pin_memory=True,
-        sampler=dist.DistributedSampler(train_ds, num_replicas=world_size, rank=rank, shuffle=True)
+        sampler=DistributedSampler(train_ds, num_replicas=world_size, rank=rank, shuffle=True)
 
     val_loader = torch.utils.data.DataLoader(
         val_ds,
         batch_size=args.batch_size,
         num_workers=args.workers,
-        pin_memory=True
-        sampler=dist.DistributedSampler(val_ds, num_replicas=world_size, rank=rank, shuffle=False))
+        pin_memory=True,
+        sampler=DistributedSampler(val_ds, num_replicas=world_size, rank=rank, shuffle=False))
 
     print('==> Building model..')
     model = models.resnet152(pretrained=True)
@@ -132,7 +132,7 @@ if __name__ == '__main__':
         ]))
 
     val_ds = datasets.CIFAR100(
-        args.dir
+        args.dir,
         train=False,
         download=True,
         transform=transforms.Compose([
