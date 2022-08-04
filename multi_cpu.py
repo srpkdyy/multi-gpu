@@ -25,7 +25,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torchvision import datasets, transforms, models
     
 
-def main(rank, world_size, train_ds, test_ds, args):
+def main(rank, world_size, train_ds, val_ds, args):
     torch.distributed.init_process_group('nccl', rank=rank, world_size=world_size)
 
     train_loader = torch.utils.data.DataLoader(
