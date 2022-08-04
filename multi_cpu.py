@@ -11,7 +11,7 @@ args = parser.parse_args()
 import os
 os.environ['CUDA_VISIBLE_DEVICES'] = ', '.join(map(str, range(args.n_device)))
 os.environ['MASTER_ADDR'] = '127.0.0.1'
-os.environ['MASTER_PORT'] = '39392'
+os.environ['MASTER_PORT'] = 39392
 
 import sys
 import time
