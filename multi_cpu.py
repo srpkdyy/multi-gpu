@@ -33,7 +33,7 @@ def main(rank, world_size, train_ds, val_ds, args):
         batch_size=args.batch_size, 
         num_workers=args.workers, 
         pin_memory=True,
-        sampler=DistributedSampler(train_ds, num_replicas=world_size, rank=rank, shuffle=True)
+        sampler=DistributedSampler(train_ds, num_replicas=world_size, rank=rank, shuffle=True))
 
     val_loader = torch.utils.data.DataLoader(
         val_ds,
